@@ -5,6 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -17,6 +24,17 @@ import { Download } from "lucide-react";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
 
+const SECTIONS = [
+  "All Sections",
+  "CSE-A",
+  "CSE-B",
+  "CSE-C",
+  "CSE-AI",
+  "ECE-A",
+  "ECE-B",
+  "Mech",
+];
+
 interface AttendanceRecord {
   id: string;
   date: string;
@@ -26,6 +44,7 @@ interface AttendanceRecord {
     roll_number: string;
     name: string;
     class: string;
+    section: string;
   };
 }
 
@@ -33,12 +52,12 @@ export default function Records() {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [classFilter, setClassFilter] = useState("");
+  const [sectionFilter, setSectionFilter] = useState("All Sections");
   const { toast } = useToast();
 
   useEffect(() => {
     loadRecords();
-  }, [startDate, endDate, classFilter]);
+  }, [startDate, endDate, sectionFilter]);
 
   const loadRecords = async () => {
     let query = supabase
@@ -51,16 +70,13 @@ export default function Records() {
         students (
           roll_number,
           name,
-          class
+          class,
+          section
         )
       `)
       .gte("date", startDate)
       .lte("date", endDate)
       .order("date", { ascending: false });
-
-    if (classFilter) {
-      query = query.eq("students.class", classFilter);
-    }
 
     const { data, error } = await query;
 
@@ -71,13 +87,21 @@ export default function Records() {
         variant: "destructive",
       });
     } else {
-      const formattedData = data?.map((record: any) => ({
+      let formattedData = data?.map((record: any) => ({
         id: record.id,
         date: record.date,
         status: record.status,
         is_manual: record.is_manual,
         student: record.students,
       })) || [];
+
+      // Apply section filter on client side
+      if (sectionFilter && sectionFilter !== "All Sections") {
+        formattedData = formattedData.filter(
+          (record) => record.student.section === sectionFilter
+        );
+      }
+
       setRecords(formattedData);
     }
   };
@@ -87,7 +111,8 @@ export default function Records() {
       Date: format(new Date(record.date), "dd/MM/yyyy"),
       "Roll Number": record.student.roll_number,
       Name: record.student.name,
-      Class: record.student.class,
+      Year: record.student.class,
+      Section: record.student.section,
       Status: record.status.toUpperCase(),
       Type: record.is_manual ? "Manual" : "Face Recognition",
     }));
@@ -137,13 +162,19 @@ export default function Records() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="classFilter">Class</Label>
-              <Input
-                id="classFilter"
-                placeholder="e.g., 10-A"
-                value={classFilter}
-                onChange={(e) => setClassFilter(e.target.value)}
-              />
+              <Label htmlFor="sectionFilter">Section</Label>
+              <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SECTIONS.map((section) => (
+                    <SelectItem key={section} value={section}>
+                      {section}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-end">
               <Button onClick={exportToExcel} className="w-full">
@@ -167,7 +198,8 @@ export default function Records() {
                   <TableHead>Date</TableHead>
                   <TableHead>Roll Number</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Class</TableHead>
+                  <TableHead>Year</TableHead>
+                  <TableHead>Section</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Type</TableHead>
                 </TableRow>
@@ -181,6 +213,7 @@ export default function Records() {
                     <TableCell>{record.student.roll_number}</TableCell>
                     <TableCell>{record.student.name}</TableCell>
                     <TableCell>{record.student.class}</TableCell>
+                    <TableCell>{record.student.section}</TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${

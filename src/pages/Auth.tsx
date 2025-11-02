@@ -90,10 +90,10 @@ export default function Auth() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">
-            College Attendance System
+            PYDAH College
           </CardTitle>
           <CardDescription>
-            {isLogin ? "Sign in to manage attendance" : "Create an admin account"}
+            {isLogin ? "Admin Sign In" : "Create Admin Account"}
           </CardDescription>
         </CardHeader>
         <CardContent>

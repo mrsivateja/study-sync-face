@@ -12,6 +12,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -21,6 +28,16 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Edit } from "lucide-react";
+
+const SECTIONS = [
+  "CSE-A",
+  "CSE-B",
+  "CSE-C",
+  "CSE-AI",
+  "ECE-A",
+  "ECE-B",
+  "Mech",
+];
 
 interface Student {
   id: string;
@@ -182,9 +199,10 @@ export default function Students() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="class">Class</Label>
+                <Label htmlFor="class">Year</Label>
                 <Input
                   id="class"
+                  placeholder="e.g., 1st Year, 2nd Year"
                   value={formData.class}
                   onChange={(e) =>
                     setFormData({ ...formData, class: e.target.value })
@@ -194,13 +212,24 @@ export default function Students() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="section">Section</Label>
-                <Input
-                  id="section"
+                <Select
                   value={formData.section}
-                  onChange={(e) =>
-                    setFormData({ ...formData, section: e.target.value })
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, section: value })
                   }
-                />
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select section" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SECTIONS.map((section) => (
+                      <SelectItem key={section} value={section}>
+                        {section}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Button type="submit" className="w-full">
                 {editingStudent ? "Update Student" : "Add Student"}
@@ -216,7 +245,7 @@ export default function Students() {
             <TableRow>
               <TableHead>Roll Number</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Class</TableHead>
+              <TableHead>Year</TableHead>
               <TableHead>Section</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>

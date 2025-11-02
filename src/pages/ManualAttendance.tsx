@@ -3,16 +3,35 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { CheckCircle, XCircle, Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
+
+const SECTIONS = [
+  "All Sections",
+  "CSE-A",
+  "CSE-B",
+  "CSE-C",
+  "CSE-AI",
+  "ECE-A",
+  "ECE-B",
+  "Mech",
+];
 
 interface Student {
   id: string;
   roll_number: string;
   name: string;
   class: string;
+  section: string;
 }
 
 interface AttendanceStatus {
@@ -21,7 +40,9 @@ interface AttendanceStatus {
 
 export default function ManualAttendance() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [sectionFilter, setSectionFilter] = useState("All Sections");
   const [attendance, setAttendance] = useState<AttendanceStatus>({});
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -34,10 +55,19 @@ export default function ManualAttendance() {
     loadExistingAttendance();
   }, [selectedDate, students]);
 
+  useEffect(() => {
+    if (sectionFilter === "All Sections") {
+      setFilteredStudents(students);
+    } else {
+      setFilteredStudents(students.filter((s) => s.section === sectionFilter));
+    }
+  }, [sectionFilter, students]);
+
   const loadStudents = async () => {
     const { data, error } = await supabase
       .from("students")
-      .select("*")
+      .select("id, roll_number, name, class, section")
+      .order("section")
       .order("roll_number");
 
     if (error) {
@@ -116,18 +146,18 @@ export default function ManualAttendance() {
 
   const markAllPresent = () => {
     const newAttendance: AttendanceStatus = {};
-    students.forEach((student) => {
+    filteredStudents.forEach((student) => {
       newAttendance[student.id] = "present";
     });
-    setAttendance(newAttendance);
+    setAttendance((prev) => ({ ...prev, ...newAttendance }));
   };
 
   const markAllAbsent = () => {
     const newAttendance: AttendanceStatus = {};
-    students.forEach((student) => {
+    filteredStudents.forEach((student) => {
       newAttendance[student.id] = "absent";
     });
-    setAttendance(newAttendance);
+    setAttendance((prev) => ({ ...prev, ...newAttendance }));
   };
 
   return (
@@ -177,7 +207,7 @@ export default function ManualAttendance() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {students.map((student) => (
+            {filteredStudents.map((student) => (
               <div
                 key={student.id}
                 className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
@@ -185,7 +215,7 @@ export default function ManualAttendance() {
                 <div>
                   <p className="font-medium">{student.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {student.roll_number} • {student.class}
+                    {student.roll_number} • {student.section} • {student.class}
                   </p>
                 </div>
                 <div className="flex gap-2">

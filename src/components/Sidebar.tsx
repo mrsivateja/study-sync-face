@@ -8,7 +8,8 @@ import {
   Camera,
   CalendarOff,
   LogOut,
-  GraduationCap
+  GraduationCap,
+  Shield
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ const navigation = [
   { name: "Face Recognition", href: "/face-attendance", icon: Camera },
   { name: "Attendance Records", href: "/records", icon: Calendar },
   { name: "Holidays", href: "/holidays", icon: CalendarOff },
+  { name: "Admin Management", href: "/admin-management", icon: Shield },
 ];
 
 export const Sidebar = () => {
@@ -52,8 +54,8 @@ export const Sidebar = () => {
           <GraduationCap className="h-6 w-6 text-primary" />
         </div>
         <div className="flex flex-col">
-          <span className="font-semibold text-foreground">Attendance</span>
-          <span className="text-xs text-muted-foreground">Management</span>
+          <span className="font-bold text-lg text-foreground">PYDAH</span>
+          <span className="text-xs text-muted-foreground">College Attendance</span>
         </div>
       </div>
       

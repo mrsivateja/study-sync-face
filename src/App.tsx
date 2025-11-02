@@ -13,6 +13,7 @@ import ManualAttendance from "./pages/ManualAttendance";
 import FaceAttendance from "./pages/FaceAttendance";
 import Records from "./pages/Records";
 import Holidays from "./pages/Holidays";
+import AdminManagement from "./pages/AdminManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -82,6 +83,16 @@ const App = () => (
               <AuthGuard>
                 <DashboardLayout>
                   <Holidays />
+                </DashboardLayout>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/admin-management"
+            element={
+              <AuthGuard>
+                <DashboardLayout>
+                  <AdminManagement />
                 </DashboardLayout>
               </AuthGuard>
             }
