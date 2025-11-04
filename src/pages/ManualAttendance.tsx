@@ -42,6 +42,7 @@ export default function ManualAttendance() {
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [selectedPeriod, setSelectedPeriod] = useState("1");
   const [sectionFilter, setSectionFilter] = useState("All Sections");
   const [attendance, setAttendance] = useState<AttendanceStatus>({});
   const [loading, setLoading] = useState(false);
@@ -53,7 +54,7 @@ export default function ManualAttendance() {
 
   useEffect(() => {
     loadExistingAttendance();
-  }, [selectedDate, students]);
+  }, [selectedDate, selectedPeriod, students]);
 
   useEffect(() => {
     if (sectionFilter === "All Sections") {
@@ -87,7 +88,8 @@ export default function ManualAttendance() {
     const { data } = await supabase
       .from("attendance")
       .select("student_id, status")
-      .eq("date", selectedDate);
+      .eq("date", selectedDate)
+      .eq("period", parseInt(selectedPeriod));
 
     const attendanceMap: AttendanceStatus = {};
     data?.forEach((record) => {
@@ -113,16 +115,18 @@ export default function ManualAttendance() {
         .map(([studentId, status]) => ({
           student_id: studentId,
           date: selectedDate,
+          period: parseInt(selectedPeriod),
           status,
           is_manual: true,
           marked_by: user?.id,
         }));
 
-      // Delete existing attendance for the date
+      // Delete existing attendance for the date and period
       await supabase
         .from("attendance")
         .delete()
-        .eq("date", selectedDate);
+        .eq("date", selectedDate)
+        .eq("period", parseInt(selectedPeriod));
 
       // Insert new attendance records
       const { error } = await supabase.from("attendance").insert(records);
@@ -169,7 +173,7 @@ export default function ManualAttendance() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Select Date</CardTitle>
+          <CardTitle>Select Date & Period</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -182,6 +186,21 @@ export default function ManualAttendance() {
                 onChange={(e) => setSelectedDate(e.target.value)}
                 max={format(new Date(), "yyyy-MM-dd")}
               />
+            </div>
+            <div className="flex-1">
+              <Label htmlFor="period">Period (Hour)</Label>
+              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5, 6, 7].map((period) => (
+                    <SelectItem key={period} value={period.toString()}>
+                      Period {period}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex gap-2 items-end">
               <Button variant="outline" onClick={markAllPresent}>

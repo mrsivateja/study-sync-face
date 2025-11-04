@@ -9,7 +9,8 @@ import {
   CalendarOff,
   LogOut,
   GraduationCap,
-  Shield
+  Shield,
+  FileText
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "My Attendance", href: "/my-attendance", icon: FileText },
   { name: "Students", href: "/students", icon: Users },
   { name: "Manual Attendance", href: "/manual-attendance", icon: ClipboardCheck },
   { name: "Face Recognition", href: "/face-attendance", icon: Camera },

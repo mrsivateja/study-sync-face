@@ -38,6 +38,7 @@ const SECTIONS = [
 interface AttendanceRecord {
   id: string;
   date: string;
+  period: number;
   status: string;
   is_manual: boolean;
   student: {
@@ -65,6 +66,7 @@ export default function Records() {
       .select(`
         id,
         date,
+        period,
         status,
         is_manual,
         students (
@@ -76,7 +78,8 @@ export default function Records() {
       `)
       .gte("date", startDate)
       .lte("date", endDate)
-      .order("date", { ascending: false });
+      .order("date", { ascending: false })
+      .order("period", { ascending: true });
 
     const { data, error } = await query;
 
@@ -90,6 +93,7 @@ export default function Records() {
       let formattedData = data?.map((record: any) => ({
         id: record.id,
         date: record.date,
+        period: record.period,
         status: record.status,
         is_manual: record.is_manual,
         student: record.students,
@@ -109,6 +113,7 @@ export default function Records() {
   const exportToExcel = () => {
     const exportData = records.map((record) => ({
       Date: format(new Date(record.date), "dd/MM/yyyy"),
+      Period: record.period,
       "Roll Number": record.student.roll_number,
       Name: record.student.name,
       Year: record.student.class,
@@ -196,6 +201,7 @@ export default function Records() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
+                  <TableHead>Period</TableHead>
                   <TableHead>Roll Number</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Year</TableHead>
@@ -210,6 +216,7 @@ export default function Records() {
                     <TableCell>
                       {format(new Date(record.date), "dd/MM/yyyy")}
                     </TableCell>
+                    <TableCell>Period {record.period}</TableCell>
                     <TableCell>{record.student.roll_number}</TableCell>
                     <TableCell>{record.student.name}</TableCell>
                     <TableCell>{record.student.class}</TableCell>

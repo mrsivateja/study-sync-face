@@ -22,6 +22,7 @@ export type Database = {
           is_manual: boolean
           marked_by: string | null
           notes: string | null
+          period: number
           status: string
           student_id: string
         }
@@ -32,6 +33,7 @@ export type Database = {
           is_manual?: boolean
           marked_by?: string | null
           notes?: string | null
+          period?: number
           status: string
           student_id: string
         }
@@ -42,6 +44,7 @@ export type Database = {
           is_manual?: boolean
           marked_by?: string | null
           notes?: string | null
+          period?: number
           status?: string
           student_id?: string
         }

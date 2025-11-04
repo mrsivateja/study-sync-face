@@ -15,6 +15,7 @@ import FaceAttendance from "./pages/FaceAttendance";
 import Records from "./pages/Records";
 import Holidays from "./pages/Holidays";
 import AdminManagement from "./pages/AdminManagement";
+import StudentAttendance from "./pages/StudentAttendance";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -94,6 +95,16 @@ const App = () => (
               <AuthGuard>
                 <DashboardLayout>
                   <AdminManagement />
+                </DashboardLayout>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/my-attendance"
+            element={
+              <AuthGuard>
+                <DashboardLayout>
+                  <StudentAttendance />
                 </DashboardLayout>
               </AuthGuard>
             }
