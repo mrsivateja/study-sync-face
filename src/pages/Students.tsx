@@ -27,7 +27,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Edit } from "lucide-react";
+import { Plus, Trash2, Edit, Upload, X } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const SECTIONS = [
   "CSE-A",
@@ -43,6 +44,7 @@ interface Student {
   id: string;
   roll_number: string;
   name: string;
+  email: string | null;
   class: string;
   section: string | null;
   photo_url: string | null;
@@ -55,9 +57,12 @@ export default function Students() {
   const [formData, setFormData] = useState({
     roll_number: "",
     name: "",
+    email: "",
     class: "",
     section: "",
   });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -81,44 +86,80 @@ export default function Students() {
     }
   };
 
+  const uploadPhoto = async (studentId: string) => {
+    if (!photoFile) return null;
+
+    const fileExt = photoFile.name.split('.').pop();
+    const fileName = `${studentId}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('student-photos')
+      .upload(filePath, photoFile, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage
+      .from('student-photos')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingStudent) {
-      const { error } = await supabase
-        .from("students")
-        .update(formData)
-        .eq("id", editingStudent.id);
+    try {
+      if (editingStudent) {
+        let photo_url = editingStudent.photo_url;
+        
+        if (photoFile) {
+          photo_url = await uploadPhoto(editingStudent.id);
+        }
 
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
+        const { error } = await supabase
+          .from("students")
+          .update({ ...formData, photo_url })
+          .eq("id", editingStudent.id);
+
+        if (error) throw error;
+
         toast({ title: "Success", description: "Student updated successfully" });
         setIsDialogOpen(false);
         setEditingStudent(null);
         loadStudents();
-      }
-    } else {
-      const { error } = await supabase.from("students").insert([formData]);
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
       } else {
+        const { data: newStudent, error } = await supabase
+          .from("students")
+          .insert([formData])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (photoFile && newStudent) {
+          const photo_url = await uploadPhoto(newStudent.id);
+          await supabase
+            .from("students")
+            .update({ photo_url })
+            .eq("id", newStudent.id);
+        }
+
         toast({ title: "Success", description: "Student added successfully" });
         setIsDialogOpen(false);
         loadStudents();
       }
-    }
 
-    setFormData({ roll_number: "", name: "", class: "", section: "" });
+      setFormData({ roll_number: "", name: "", email: "", class: "", section: "" });
+      setPhotoFile(null);
+      setPhotoPreview(null);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -143,10 +184,24 @@ export default function Students() {
     setFormData({
       roll_number: student.roll_number,
       name: student.name,
+      email: student.email || "",
       class: student.class,
       section: student.section || "",
     });
+    setPhotoPreview(student.photo_url);
     setIsDialogOpen(true);
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -160,7 +215,9 @@ export default function Students() {
           <DialogTrigger asChild>
             <Button onClick={() => {
               setEditingStudent(null);
-              setFormData({ roll_number: "", name: "", class: "", section: "" });
+              setFormData({ roll_number: "", name: "", email: "", class: "", section: "" });
+              setPhotoFile(null);
+              setPhotoPreview(null);
             }}>
               <Plus className="mr-2 h-4 w-4" />
               Add Student
@@ -176,6 +233,48 @@ export default function Students() {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Photo</Label>
+                <div className="flex items-center gap-4">
+                  {photoPreview ? (
+                    <div className="relative">
+                      <Avatar className="h-20 w-20">
+                        <AvatarImage src={photoPreview} />
+                        <AvatarFallback>Photo</AvatarFallback>
+                      </Avatar>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="destructive"
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                        onClick={() => {
+                          setPhotoFile(null);
+                          setPhotoPreview(null);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Avatar className="h-20 w-20">
+                      <AvatarFallback>
+                        <Upload className="h-8 w-8" />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div className="flex-1">
+                    <Input
+                      id="photo"
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Upload student photo for face recognition
+                    </p>
+                  </div>
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="roll_number">Roll Number</Label>
                 <Input
@@ -197,6 +296,21 @@ export default function Students() {
                   }
                   required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email (for student login)</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="student@example.com"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Students can sign up with this email to view their attendance
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="class">Year</Label>
@@ -243,8 +357,10 @@ export default function Students() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Photo</TableHead>
               <TableHead>Roll Number</TableHead>
               <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Year</TableHead>
               <TableHead>Section</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -253,8 +369,17 @@ export default function Students() {
           <TableBody>
             {students.map((student) => (
               <TableRow key={student.id}>
+                <TableCell>
+                  <Avatar>
+                    <AvatarImage src={student.photo_url || undefined} />
+                    <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                </TableCell>
                 <TableCell className="font-medium">{student.roll_number}</TableCell>
                 <TableCell>{student.name}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {student.email || "-"}
+                </TableCell>
                 <TableCell>{student.class}</TableCell>
                 <TableCell>{student.section || "-"}</TableCell>
                 <TableCell className="text-right">

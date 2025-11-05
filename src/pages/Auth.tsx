@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -93,10 +94,20 @@ export default function Auth() {
             PYDAH College
           </CardTitle>
           <CardDescription>
-            {isLogin ? "Admin Sign In" : "Create Admin Account"}
+            {isLogin ? "Sign In" : "Create Account"}
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {!isLogin && (
+            <Alert className="mb-4">
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                <strong>First sign up becomes admin automatically!</strong>
+                <br />
+                Students: Use the email added by admin in the Students page.
+              </AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
               <div className="space-y-2">
