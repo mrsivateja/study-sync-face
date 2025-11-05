@@ -113,6 +113,7 @@ export type Database = {
           roll_number: string
           section: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           class: string
@@ -123,6 +124,7 @@ export type Database = {
           roll_number: string
           section?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           class?: string
@@ -133,6 +135,7 @@ export type Database = {
           roll_number?: string
           section?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }

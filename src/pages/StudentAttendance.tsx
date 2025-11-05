@@ -55,8 +55,8 @@ export default function StudentAttendance() {
     const { data: studentData, error: studentError } = await supabase
       .from("students")
       .select("id")
-      .eq("id", user.id)
-      .single();
+      .eq("user_id", user.id)
+      .maybeSingle();
 
     if (studentError || !studentData) {
       toast({
