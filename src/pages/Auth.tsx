@@ -98,28 +98,16 @@ export default function Auth() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Alert className="mb-4">
-            <Info className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              {!isLogin ? (
-                <>
-                  <strong>First sign up becomes admin automatically!</strong>
-                  <br />
-                  Students: Use the email added by admin in the Students page.
-                </>
-              ) : (
-                <>
-                  <strong>Default Admin Credentials:</strong>
-                  <br />
-                  Email: admin@pydahcollege.edu | Password: vertex25
-                  <br />
-                  <span className="text-xs text-muted-foreground">
-                    (Sign up with these credentials if no admin exists yet)
-                  </span>
-                </>
-              )}
-            </AlertDescription>
-          </Alert>
+          {!isLogin && (
+            <Alert className="mb-4">
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                <strong>First sign up becomes admin automatically!</strong>
+                <br />
+                Students: Use the email added by admin in the Students page.
+              </AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
               <div className="space-y-2">
