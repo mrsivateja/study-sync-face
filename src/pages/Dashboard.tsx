@@ -3,8 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Calendar, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [stats, setStats] = useState({
     totalStudents: 0,
     presentToday: 0,
@@ -13,8 +16,33 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    loadStats();
+    checkAdminAndLoadStats();
   }, []);
+
+  const checkAdminAndLoadStats = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      
+      const adminStatus = !!data;
+      setIsAdmin(adminStatus);
+      
+      // Redirect students to their attendance page
+      if (!adminStatus) {
+        navigate("/my-attendance");
+        return;
+      }
+      
+      // Load admin stats
+      loadStats();
+    }
+  };
 
   const loadStats = async () => {
     const today = format(new Date(), "yyyy-MM-dd");
@@ -77,10 +105,18 @@ export default function Dashboard() {
     },
   ];
 
+  if (isAdmin === null) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
         <p className="text-muted-foreground">
           Overview of attendance management system
         </p>

@@ -15,10 +15,10 @@ import {
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
 
-const navigation = [
+const adminNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "My Attendance", href: "/my-attendance", icon: FileText },
   { name: "Students", href: "/students", icon: Users },
   { name: "Manual Attendance", href: "/manual-attendance", icon: ClipboardCheck },
   { name: "Face Recognition", href: "/face-attendance", icon: Camera },
@@ -27,10 +27,38 @@ const navigation = [
   { name: "Admin Management", href: "/admin-management", icon: Shield },
 ];
 
+const studentNavigation = [
+  { name: "My Attendance", href: "/my-attendance", icon: FileText },
+];
+
 export const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkAdminStatus();
+  }, []);
+
+  const checkAdminStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      
+      setIsAdmin(!!data);
+    }
+    setLoading(false);
+  };
+
+  const navigation = isAdmin ? adminNavigation : studentNavigation;
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -49,6 +77,14 @@ export const Sidebar = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex h-screen w-64 flex-col border-r bg-card items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card">
       <div className="flex h-16 items-center gap-2 border-b px-6">
@@ -57,7 +93,9 @@ export const Sidebar = () => {
         </div>
         <div className="flex flex-col">
           <span className="font-bold text-lg text-foreground">PYDAH</span>
-          <span className="text-xs text-muted-foreground">College Attendance</span>
+          <span className="text-xs text-muted-foreground">
+            {isAdmin ? "Admin Portal" : "Student Portal"}
+          </span>
         </div>
       </div>
       
